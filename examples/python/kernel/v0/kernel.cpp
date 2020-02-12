@@ -16,7 +16,6 @@
 #include <bsg_manycore.h>
 #include <bsg_tile_group_barrier.h>
 
-#include <vector_add.hpp>
 #include <cstring>
 
 extern int bsg_printf(const char*, ...);
@@ -26,19 +25,4 @@ extern int bsg_printf(const char*, ...);
  */
 extern "C" {
 
-        int  __attribute__ ((noinline)) kernel_vector_add_float(
-                      float *A, float *B, float *C,
-                      uint32_t nels,
-                      uint32_t block_size_y, uint32_t block_size_x,
-                      uint32_t tag) {
-                int rc;
-
-                bsg_cuda_print_stat_kernel_start();
-                bsg_cuda_print_stat_start(tag);
-                rc = kernel_tile_vector_add(A, B, C, nels);
-                bsg_cuda_print_stat_end(tag);
-                bsg_cuda_print_stat_kernel_end();
-
-                return rc;
-        }
 }

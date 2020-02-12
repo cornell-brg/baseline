@@ -46,7 +46,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-VERSIONS = v0 v1 v2
+VERSIONS = v0
 
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
@@ -56,7 +56,7 @@ VERSIONS = v0 v1 v2
 # Use KERNEL_*LIBRARIES list sources that should be compiled and linked with all
 # kernel.cpp versions. However, if you have version-specific sources you must
 # come up with your own solution.
-# 
+#
 # Use KERNEL_INCLUDES to specify the path to directories that contain headers.
 ################################################################################
 
