@@ -277,10 +277,10 @@ int kernel_sort (int argc, char **argv) {
         }
         printf("before sorting Rs");
         // Generate the known-correct results on the host
-        sort(R_32, 0, WIDTH);
-        sort(R_16, 0, WIDTH);
-        sort(R_8,  0, WIDTH);
-        sort(R_f,  0, WIDTH);
+        sort<int32_t>(R_32, 0, WIDTH);
+        sort<int16_t>(R_16, 0, WIDTH);
+        sort<int8_t>(R_8,  0, WIDTH);
+        sort<float>(R_f,  0, WIDTH);
         printf("after sorting R2");
 
 
