@@ -281,6 +281,7 @@ int kernel_sort (int argc, char **argv) {
         sort(R_16, 0, WIDTH);
         sort(R_8,  0, WIDTH);
         sort(R_f,  0, WIDTH);
+        printf("after sorting R2");
 
 
         // Initialize device, load binary and unfreeze tiles.
