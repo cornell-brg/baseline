@@ -212,6 +212,7 @@ int kernel_sort (int argc, char **argv) {
         if (!strcmp("v0", test_name)){
                 tg_dim = { .x = 1, .y = 1 };
                 grid_dim = { .x = 1, .y = 1};
+                printf("I definitely got into V000!");
         } else if (!strcmp("v1", test_name)){
                 tg_dim = { .x = 4, .y = 1 };
                 grid_dim = {.x = 1, .y = 1};
@@ -267,7 +268,7 @@ int kernel_sort (int argc, char **argv) {
                 A_f[i] = static_cast<float>(res);
         }
 
-        for (uint64_t i = 0; i <WIDTH; i++) {
+        for (uint64_t i = 0; i < WIDTH; i++) {
             R_32[i] = A_32[i];
             R_16[i] = A_16[i];
             R_8[i]  = A_8[i];
@@ -276,10 +277,10 @@ int kernel_sort (int argc, char **argv) {
         }
 
         // Generate the known-correct results on the host
-        sort (R_32, 0, WIDTH);
-        sort (R_16, 0, WIDTH);
-        sort (R_8, 0, WIDTH);
-        sort (R_f, 0, WIDTH);
+        sort(R_32, 0, WIDTH);
+        sort(R_16, 0, WIDTH);
+        sort(R_8,  0, WIDTH);
+        sort(R_f,  0, WIDTH);
 
 
         // Initialize device, load binary and unfreeze tiles.
