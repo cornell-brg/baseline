@@ -93,7 +93,7 @@ template <typename T>
 void sort( T *A, uint64_t begin, uint64_t end ) {
     end = end - 1;
     if (begin >= end) {
-        printf("this is before return!")
+        printf("this is before return!");
         return;
     }
     uint64_t mid = (begin + end - 1) / 2;
