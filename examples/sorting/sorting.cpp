@@ -275,7 +275,7 @@ int kernel_sort (int argc, char **argv) {
             R_f[i]  = A_f[i];
 
         }
-
+        printf("before sorting Rs");
         // Generate the known-correct results on the host
         sort(R_32, 0, WIDTH);
         sort(R_16, 0, WIDTH);
