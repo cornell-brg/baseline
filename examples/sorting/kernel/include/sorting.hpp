@@ -52,7 +52,7 @@ int __attribute__ ((noinline)) kernel_sort_single_tile(T *A,
                       uint32_t WIDTH) {
     // A single tile performs the entire vector addition
 	for (int iter_x = 0; iter_x < WIDTH; iter_x += 1) { 
-        sort(A, 0, WIDTH);
+        kernel_sort(A, 0, WIDTH);
 	}
 
 	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
