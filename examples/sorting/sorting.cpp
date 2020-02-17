@@ -91,11 +91,12 @@ void merge( T *A, uint64_t begin, uint64_t mid, uint64_t end)
 
 template <typename T>
 void sort( T *A, uint64_t begin, uint64_t end ) {
-    printf("hi I got into parallel sort!");
     end = end - 1;
     if (begin >= end) {return;}
     uint64_t mid = (begin + end - 1) / 2;
+    printf("hi I got into parallel sort!");
     sort(A, begin, mid);
+    printf("this is the end of the inner sorting recursion!");
     sort(A, mid + 1, end);
 
     merge(A, begin, mid, end);
