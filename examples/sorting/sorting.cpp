@@ -131,8 +131,8 @@ int run_test(hb_mc_device_t &device, const char* kernel,
         }
 
         // Copy B from host onto device DRAM.
-        void *dst = (void *) ((intptr_t) B_device);
-        void *src = (void *) &B[0];
+        dst = (void *) ((intptr_t) B_device);
+        src = (void *) &B[0];
         rc = hb_mc_device_memcpy (&device, dst, src,
                                   (WIDTH) * sizeof(T),
                                   HB_MC_MEMCPY_TO_DEVICE);

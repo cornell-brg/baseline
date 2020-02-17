@@ -34,7 +34,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_sort_single_tile(A, WIDTH);
+                        rc = kernel_sort_single_tile(A, B, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
@@ -50,7 +50,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_sort_single_tile(A, WIDTH);
+                        rc = kernel_sort_single_tile(A, B, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
@@ -66,7 +66,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_sort_single_tile(A, WIDTH);
+                        rc = kernel_sort_single_tile(A, B, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();
@@ -82,7 +82,7 @@ extern "C" {
                 int rc;
                 for(int i = 0; i <= iter; ++i){
                         bsg_cuda_print_stat_start(tag);
-                        rc = kernel_sort_single_tile(A, WIDTH);
+                        rc = kernel_sort_single_tile(A, B, WIDTH);
                         bsg_cuda_print_stat_end(tag);
                 }
                 bsg_cuda_print_stat_kernel_end();

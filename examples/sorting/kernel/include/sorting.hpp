@@ -47,8 +47,8 @@ void __attribute__ ((noinline)) kernel_sort( T *A, T *B, int begin, int end ) {
     kernel_merge( B, A, begin, mid, A, mid, end );
 
   // Transfer elements back to the original array
-  size_t j = begin;
-  for ( size_t i = begin; i < end; i++ ) {
+  int j = begin;
+  for ( int i = begin; i < end; i++ ) {
     A[i] = B[j];
     j += 1;
   }
@@ -63,7 +63,7 @@ void __attribute__ ((noinline)) kernel_sort( T *A, T *B, int begin, int end ) {
  * Do NOT use this version with larger tile groups 
  */
 template <typename T>
-int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, T *B uint32_t WIDTH) {
+int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, T *B, uint32_t WIDTH) {
     // A single tile performs the entire vector addition
 	for (int iter_x = 0; iter_x < WIDTH; iter_x += 1) { 
         kernel_sort(A, B, 0, WIDTH);
