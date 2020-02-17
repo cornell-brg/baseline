@@ -27,7 +27,7 @@ extern int bsg_printf(const char*, ...);
  */
 extern "C" {
         int  __attribute__ ((noinline)) kernel_sort_int(
-                      bsg_printf("I am in kernel_sort_int!!!")
+                      bsg_printf("I am in kernel_sort_int!!!");
                       int *A, uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
