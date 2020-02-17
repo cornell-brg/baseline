@@ -91,11 +91,11 @@ void merge( T *A, uint64_t begin, uint64_t mid, uint64_t end)
 
 template <typename T>
 void sort( T *A, uint64_t begin, uint64_t end ) {
-
-    if ((end - begin) == 1) {return;}
-    uint64_t mid = (begin + end) / 2;
+    end = end - 1;
+    if (begin >= end) {return;}
+    uint64_t mid = (begin + end - 1) / 2;
     sort(A, begin, mid);
-    sort(A, mid, end);
+    sort(A, mid + 1, end);
 
     merge(A, begin, mid, end);
 

@@ -29,11 +29,11 @@ void __attribute__ ((noinline)) kernel_merge (T *A, uint64_t begin, uint64_t mid
 
 template <typename T>
 void __attribute__ ((noinline)) kernel_sort( T *A, uint64_t begin, uint64_t end ) {
-
-    if ((end - begin) == 1) {return;}
-    uint64_t mid = (begin + end) / 2;
+    end = end - 1;
+    if (begin >= end) {return;}
+    uint64_t mid = (begin + end - 1) / 2;
     kernel_sort(A, begin, mid);
-    kernel_sort(A, mid, end);
+    kernel_sort(A, mid + 1, end);
 
     kernel_merge(A, begin, mid, end);
 
@@ -48,8 +48,7 @@ void __attribute__ ((noinline)) kernel_sort( T *A, uint64_t begin, uint64_t end 
  * Do NOT use this version with larger tile groups 
  */
 template <typename T>
-int __attribute__ ((noinline)) kernel_sort_single_tile(T *A,
-                      uint32_t WIDTH) {
+int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, uint32_t WIDTH) {
     // A single tile performs the entire vector addition
 	for (int iter_x = 0; iter_x < WIDTH; iter_x += 1) { 
         kernel_sort(A, 0, WIDTH);
@@ -61,15 +60,14 @@ int __attribute__ ((noinline)) kernel_sort_single_tile(T *A,
 }
 
 
-// /*
-//  * This is the single 1 dimensional tile group version of vector addition
-//  * that adds two vectors A and B and stores the result in C.
-//  *
-//  * The code assumes a sinlge 1x1 grid of 1-dimensional tile group
-//  */
+/*
+ * This is the single 1 dimensional tile group version of vector addition
+ * that adds two vectors A and B and stores the result in C.
+ *
+ * The code assumes a sinlge 1x1 grid of 1-dimensional tile group
+ */
 // template <typename TA, typename TB, typename TC>
-// int __attribute__ ((noinline)) kernel_vector_add_single_1D_tile_group(TA *A, TB *B, TC *C,
-//                       uint32_t WIDTH) {
+// int __attribute__ ((noinline)) kernel_vector_sort_1D_tile_group(TA *A, int32_t WIDTH) {
 
 //         // Vector is divided among tiles in the tile group
 //         // As tile group is one dimensional, each tile performs
@@ -84,15 +82,14 @@ int __attribute__ ((noinline)) kernel_sort_single_tile(T *A,
 // }
 
 
-// /*
-//  * This is the single 2 dimensional tile group version of vector addition
-//  * that adds two vectors A and B and stores the result in C.
-//  *
-//  * The code assumes a sinlge 1x1 grid of tile group
-//  */
+/*
+ * This is the single 2 dimensional tile group version of vector addition
+ * that adds two vectors A and B and stores the result in C.
+ *
+ * The code assumes a sinlge 1x1 grid of tile group
+ */
 // template <typename TA, typename TB, typename TC>
-// int __attribute__ ((noinline)) kernel_vector_add_single_2D_tile_group(TA *A, TB *B, TC *C,
-//                       uint32_t WIDTH) {
+// int __attribute__ ((noinline)) kernel_vector_sort_2D_tile_group(TA *A, uint32_t WIDTH) {
 
 //         // Vector is divided among tiles in the tile group
 //         // As the tile group is two diemsnional, each tile performs
