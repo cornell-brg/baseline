@@ -30,7 +30,7 @@ extern "C" {
                       int *A, uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
-                // bsg_printf("I am in kernel_sort_int!!! %d", tag);
+                bsg_printf("I am in kernel_sort_int!!! %d", tag);
                 bsg_cuda_print_stat_kernel_start();
                 int rc;
                 for(int i = 0; i <= iter; ++i){
