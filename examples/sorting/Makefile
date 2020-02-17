@@ -61,7 +61,7 @@ VERSIONS = v0
 ################################################################################
 
 # C Libraries
-KERNEL_CLIBRARIES   +=
+KERNEL_CLIBRARIES   += $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.c
 # C++ Libraries
 KERNEL_CXXLIBRARIES +=
 
