@@ -6,7 +6,7 @@
 template <typename T>
 void __attribute__ ((noinline)) kernel_merge (T *A, uint64_t begin, uint64_t mid, uint64_t end) {
     uint64_t begin2 = mid + 1;
-    if (A[mid] <= a[begin2]) {return;}
+    if (A[mid] <= A[begin2]) {return;}
 
     while (begin <= mid && begin2 <= end) {
         if (A[begin] <= A[begin2]) {
@@ -32,10 +32,10 @@ void __attribute__ ((noinline)) kernel_sort( T *A, uint64_t begin, uint64_t end 
 
     if ((end - begin) == 1) {return;}
     uint64_t mid = (begin + end) / 2;
-    sort(A, begin, mid);
-    sort(A, mid, end);
+    kernel_sort(A, begin, mid);
+    kernel_sort(A, mid, end);
 
-    merge(A, begin, mid, end);
+    kernel_merge(A, begin, mid, end);
 
 }
 
