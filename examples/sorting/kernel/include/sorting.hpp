@@ -4,39 +4,54 @@
 
 
 template <typename T>
-void __attribute__ ((noinline)) kernel_merge (T *A, uint64_t begin, uint64_t mid, uint64_t end) {
-    uint64_t begin2 = mid + 1;
-    if (A[mid] <= A[begin2]) {return;}
+void __attribute__ ((noinline)) kernel_merge 
+    ( T* dst, T* src0, int begin0, int end0,
+      T* src1, int begin1, int end1 )
+{
+  int size = ( end0 - begin0 ) + ( end1 - begin1 );
+  int idx0 = begin0;
+  int idx1 = begin1;
 
-    while (begin <= mid && begin2 <= end) {
-        if (A[begin] <= A[begin2]) {
-            begin++;
-        } else {
-            T value = A[begin2];
-            uint64_t idx = begin2; 
-
-            while (idx != begin) {
-                A[idx] = A[idx - 1];
-                idx --;
-            }
-            A[begin] = value;
-            begin ++;
-            mid ++;
-            begin2 ++;
-        }
+  for ( int idx = begin0; idx < begin0 + size; idx++ ) {
+    // Done with array src0
+    if ( idx0 == end0 ) {
+      dst[idx] = src1[idx1];
+      idx1 += 1;
     }
+    // Done with array src1
+    else if ( idx1 == end1 ) {
+      dst[idx] = src0[idx0];
+      idx0 += 1;
+    }
+    else if ( src0[idx0] < src1[idx1] ) {
+      dst[idx] = src0[idx0];
+      idx0 += 1;
+    }
+    else {
+      dst[idx] = src1[idx1];
+      idx1 += 1;
+    }
+  }
 }
 
 template <typename T>
-void __attribute__ ((noinline)) kernel_sort( T *A, uint64_t begin, uint64_t end ) {
-    end = end - 1;
-    if (begin >= end) {return;}
-    uint64_t mid = (begin + end - 1) / 2;
-    kernel_sort(A, begin, mid);
-    kernel_sort(A, mid + 1, end);
+void __attribute__ ((noinline)) kernel_sort( T *A, T *B, int begin, int end ) {
+    if (end - begin == 1) {
+        return;
+    }
+    int mid = (begin + end) / 2;
+    kernel_sort(A, B, begin, mid);
+    kernel_sort(A, B, mid, end);
 
-    kernel_merge(A, begin, mid, end);
+  // Out-of-place sort
+    kernel_merge( B, A, begin, mid, A, mid, end );
 
+  // Transfer elements back to the original array
+  size_t j = begin;
+  for ( size_t i = begin; i < end; i++ ) {
+    A[i] = B[j];
+    j += 1;
+  }
 }
 
 
@@ -48,10 +63,10 @@ void __attribute__ ((noinline)) kernel_sort( T *A, uint64_t begin, uint64_t end 
  * Do NOT use this version with larger tile groups 
  */
 template <typename T>
-int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, uint32_t WIDTH) {
+int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, T *B uint32_t WIDTH) {
     // A single tile performs the entire vector addition
 	for (int iter_x = 0; iter_x < WIDTH; iter_x += 1) { 
-        kernel_sort(A, 0, WIDTH);
+        kernel_sort(A, B, 0, WIDTH);
 	}
 
 	bsg_tile_group_barrier(&r_barrier, &c_barrier); 

@@ -27,10 +27,9 @@ extern int bsg_printf(const char*, ...);
  */
 extern "C" {
         int  __attribute__ ((noinline)) kernel_sort_int(
-                      int *A, uint32_t WIDTH,
+                      int *A, int *B, uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
-                bsg_printf("I am in kernel_sort_int!!! %d", tag);
                 bsg_cuda_print_stat_kernel_start();
                 int rc;
                 for(int i = 0; i <= iter; ++i){
@@ -44,7 +43,7 @@ extern "C" {
         }
 
         int  __attribute__ ((noinline)) kernel_sort_int16(
-                      int16_t *A, uint32_t WIDTH,
+                      int16_t *A, int16_t *B, uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
                 bsg_cuda_print_stat_kernel_start();
@@ -59,8 +58,8 @@ extern "C" {
                 return rc;
         }
 
-        int  __attribute__ ((noinline)) kernel_vector_add_int8(
-                      int8_t *A, uint32_t WIDTH,
+        int  __attribute__ ((noinline)) kernel_sort_int8(
+                      int8_t *A, int8_t *B, uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
                 bsg_cuda_print_stat_kernel_start();
@@ -76,7 +75,7 @@ extern "C" {
         }
 
         int  __attribute__ ((noinline)) kernel_sort_float(
-                      float *A, uint32_t WIDTH,
+                      float *A, float *B, uint32_t WIDTH,
                       uint32_t block_size_y, uint32_t block_size_x,
                       uint32_t tag, uint32_t iter) {
                 bsg_cuda_print_stat_kernel_start();

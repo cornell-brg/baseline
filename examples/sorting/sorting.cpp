@@ -39,72 +39,55 @@
 #define WIDTH  64
 #define NUM_ITER 1
 
-/* Out Of Place Version */
-// template <typename T>
-// void merge( T *A, 
-//             T *B, uint64_t begin_b, uint64_t end_b,
-//             T *C, uint64_t begin_c, uint64_t end_c)
-// {
-//     for (uint64_t idx = 0; idx < end_b + end_c - begin_b - begin_c; idx++) {
-//         // Done with array B or Done with array C
-//         if (begin_b == end_b) {
-//             A[idx] = C[begin_c];
-//             begin_c ++;
-//         } else if (begin_c == end_c) {
-//             A[idx] = B[begin_b];
-//             begin_b ++;
-//         } else if (B[begin_b] < C[begin_c]) {
-//             A[idx] = B[begin_b];
-//             begin_b ++;
-//         } else {
-//             A[idx] = B[begin_c];
-//             begin_c ++;
-//         }
-//     }
-// }
-
-/* In Place Version */
 template <typename T>
-void merge( T *A, uint64_t begin, uint64_t mid, uint64_t end) 
+void merge( T* dst,
+            T* src0, size_t begin0, size_t end0,
+            T* src1, size_t begin1, size_t end1 )
 {
-    uint64_t begin2 = mid + 1;
-    if (A[mid] <= A[begin2]) {return;}
+  size_t size = ( end0 - begin0 ) + ( end1 - begin1 );
+  size_t idx0 = begin0;
+  size_t idx1 = begin1;
 
-    while (begin <= mid && begin2 <= end) {
-        if (A[begin] <= A[begin2]) {
-            begin++;
-        } else {
-            T value = A[begin2];
-            uint64_t idx = begin2; 
-
-            while (idx != begin) {
-                A[idx] = A[idx - 1];
-                idx --;
-            }
-            A[begin] = value;
-            begin ++;
-            mid ++;
-            begin2 ++;
-        }
+  for ( size_t idx = begin0; idx < begin0 + size; idx++ ) {
+    // Done with array src0
+    if ( idx0 == end0 ) {
+      dst[idx] = src1[idx1];
+      idx1 += 1;
     }
+    // Done with array src1
+    else if ( idx1 == end1 ) {
+      dst[idx] = src0[idx0];
+      idx0 += 1;
+    }
+    else if ( src0[idx0] < src1[idx1] ) {
+      dst[idx] = src0[idx0];
+      idx0 += 1;
+    }
+    else {
+      dst[idx] = src1[idx1];
+      idx1 += 1;
+    }
+  }
 }
 
 template <typename T>
-void sort( T *A, uint64_t begin, uint64_t end ) {
-    end = end - 1;
-    if (begin >= end) {
-        printf("this is before return!\n");
+void sort( T *A, T *B, int begin, int end ) {
+    if (end - begin == 1) {
         return;
     }
-    uint64_t mid = (begin + end - 1) / 2;
-    printf("mid: %d, begin: %d, end: %d\n", mid, begin, end);
-    printf("hi I got into parallel sort!\n");
-    sort(A, begin, mid);
-    printf("this is the end of the inner sorting recursion!\n");
-    sort(A, mid + 1, end);
+    int mid = (begin + end) / 2;
+    sort(A, B, begin, mid);
+    sort(A, B, mid, end);
 
-    merge(A, begin, mid, end);
+  // Out-of-place sort
+    merge( B, A, begin, mid, A, mid, end );
 
+  // Transfer elements back to the original array
+  size_t j = begin;
+  for ( size_t i = begin; i < end; i++ ) {
+    A[i] = B[j];
+    j += 1;
+  }
 }
 
 
@@ -128,8 +111,8 @@ double sort_sse (const T *A, const T *B, uint64_t N) {
 // known-good result computed by the host.
 template<typename T>
 int run_test(hb_mc_device_t &device, const char* kernel,
-             T *A, const T *gold,
-             const eva_t &A_device,
+             T *A, T *B, const T *gold,
+             const eva_t &A_device, const eva_t &B_device,
              const hb_mc_dimension_t &tg_dim,
              const hb_mc_dimension_t &grid_dim,
              const hb_mc_dimension_t block_size,
@@ -147,17 +130,28 @@ int run_test(hb_mc_device_t &device, const char* kernel,
                 return rc;
         }
 
+        // Copy B from host onto device DRAM.
+        void *dst = (void *) ((intptr_t) B_device);
+        void *src = (void *) &B[0];
+        rc = hb_mc_device_memcpy (&device, dst, src,
+                                  (WIDTH) * sizeof(T),
+                                  HB_MC_MEMCPY_TO_DEVICE);
+        if (rc != HB_MC_SUCCESS) {
+                bsg_pr_test_err("failed to copy memory to device.\n");
+                return rc;
+        }
+
 
         // Prepare list of input arguments for kernel. See the kernel source
         // file for the argument uses.
-        uint32_t cuda_argv[6] = {A_device,
+        uint32_t cuda_argv[7] = {A_device, B_device,
                                   WIDTH, block_size.y, block_size.x,
                                   tag, NUM_ITER};
 
         // Enquque grid of tile groups, pass in grid and tile group dimensions,
         // kernel name, number and list of input arguments
         rc = hb_mc_kernel_enqueue (&device, grid_dim, tg_dim,
-                                   kernel, 6, cuda_argv);
+                                   kernel, 7, cuda_argv);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("failed to initialize grid.\n");
                 return rc;
@@ -245,15 +239,19 @@ int kernel_sort (int argc, char **argv) {
 
         // Allocate A, B, C and R (result) on the host for each datatype.
         int32_t A_32[WIDTH];
+        int32_t B_32[WIDTH];
         int32_t R_32[WIDTH];
 
         int16_t A_16[WIDTH];
+        int16_t B_16[WIDTH];
         int16_t R_16[WIDTH];
 
         int8_t A_8[WIDTH];
+        int8_t B_8[WIDTH];
         int8_t R_8[WIDTH];
 
         float A_f[WIDTH];
+        float B_f[WIDTH];
         float R_f[WIDTH];
 
         
@@ -279,15 +277,17 @@ int kernel_sort (int argc, char **argv) {
             R_16[i] = A_16[i];
             R_8[i]  = A_8[i];
             R_f[i]  = A_f[i];
-
+            B_32[i] = 0;
+            B_16[i] = 0;
+            B_8[i]  = 0;
+            B_f[i]  = 0; 
         }
-        printf("before sorting Rs");
+
         // Generate the known-correct results on the host
-        sort<int32_t>(R_32, 0, WIDTH);
-        sort<int16_t>(R_16, 0, WIDTH);
-        sort<int8_t>(R_8,  0, WIDTH);
-        sort<float>(R_f,  0, WIDTH);
-        printf("after sorting R2");
+        sort(R_32, B_32, 0, WIDTH);
+        sort(R_16, B_16, 0, WIDTH);
+        sort(R_8,  B_8,  0, WIDTH);
+        sort(R_f,  B_f,  0, WIDTH);
 
 
         // Initialize device, load binary and unfreeze tiles.
@@ -321,10 +321,21 @@ int kernel_sort (int argc, char **argv) {
                 return rc;
         }
 
+        eva_t B_device;
+
+        // Allocate A on the device
+        rc = hb_mc_device_malloc(&device,
+                                 WIDTH * sizeof(uint32_t),
+                                 &B_device);
+        if (rc != HB_MC_SUCCESS) {
+                bsg_pr_test_err("failed to allocate memory on device.\n");
+                return rc;
+        }
+
 
         // Run the 32-bit integer test and check the result
         rc = run_test(device, "kernel_sort_int",
-                      A_32, R_32, A_device,
+                      A_32, B_32, R_32, A_device, B_device,
                       tg_dim, grid_dim, block_size, 1);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("int32_t test failed\n");
@@ -334,7 +345,7 @@ int kernel_sort (int argc, char **argv) {
 
         // Run the 16-bit integer test and check the result
         rc = run_test(device, "kernel_sort_int16",
-                      A_16, R_16, A_device,
+                      A_16, B_16, R_16, A_device, B_device,
                       tg_dim, grid_dim, block_size, 2);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("int16_t test failed\n");
@@ -344,7 +355,7 @@ int kernel_sort (int argc, char **argv) {
 
         // Run the 8-bit integer test and check the result
         rc = run_test(device, "kernel_sort_int8",
-                      A_8, R_8, A_device,
+                      A_8, B_8, R_8, A_device, B_device,
                       tg_dim, grid_dim, block_size, 3);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("int8_t test failed\n");
@@ -354,7 +365,7 @@ int kernel_sort (int argc, char **argv) {
 
         // Run the 32-bit floating-point test and check the result
         rc = run_test(device, "kernel_sort_float",
-                      A_f, R_f, A_device,
+                      A_f, B_f, R_f, A_device, B_device,
                       tg_dim, grid_dim, block_size, 4);
         if (rc != HB_MC_SUCCESS) {
                 bsg_pr_test_err("float test failed\n");
