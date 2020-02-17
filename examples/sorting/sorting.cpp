@@ -68,7 +68,7 @@ template <typename T>
 void merge( T *A, uint64_t begin, uint64_t mid, uint64_t end) 
 {
     uint64_t begin2 = mid + 1;
-    if (A[mid] <= a[begin2]) {return;}
+    if (A[mid] <= A[begin2]) {return;}
 
     while (begin <= mid && begin2 <= end) {
         if (A[begin] <= A[begin2]) {
