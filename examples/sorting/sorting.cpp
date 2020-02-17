@@ -91,6 +91,7 @@ void merge( T *A, uint64_t begin, uint64_t mid, uint64_t end)
 
 template <typename T>
 void sort( T *A, uint64_t begin, uint64_t end ) {
+    printf("hi I got into parallel sort!");
     end = end - 1;
     if (begin >= end) {return;}
     uint64_t mid = (begin + end - 1) / 2;
