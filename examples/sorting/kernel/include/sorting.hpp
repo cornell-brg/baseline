@@ -65,9 +65,7 @@ void __attribute__ ((noinline)) kernel_sort( T *A, T *B, int begin, int end ) {
 template <typename T>
 int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, T *B, uint32_t WIDTH) {
     // A single tile performs the entire vector addition
-	for (int iter_x = 0; iter_x < WIDTH; iter_x += 1) { 
         kernel_sort(A, B, 0, WIDTH);
-	}
 
 	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
 
@@ -103,20 +101,21 @@ int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, T *B, uint32_t WIDT
  *
  * The code assumes a sinlge 1x1 grid of tile group
  */
-// template <typename TA, typename TB, typename TC>
-// int __attribute__ ((noinline)) kernel_vector_sort_2D_tile_group(TA *A, uint32_t WIDTH) {
+template <typename T>
+int __attribute__ ((noinline)) kernel_vector_sort_2D_tile_group(T *A, T *B, uint32_t WIDTH) {
 
-//         // Vector is divided among tiles in the tile group
-//         // As the tile group is two diemsnional, each tile performs
-//         // (WIDTH / (bsg_tiles_X * bsg_tiles_Y)) additions
-// 	for (int iter_x = __bsg_id; iter_x < WIDTH; iter_x += bsg_tiles_X * bsg_tiles_Y) { 
-//                 C[iter_x] = A[iter_x] + B[iter_x];
-// 	}
+        // Vector is divided among tiles in the tile group
+        // As the tile group is two diemsnional, each tile performs
+        // (WIDTH / (bsg_tiles_X * bsg_tiles_Y)) additions
+    int length = WIDTH / (bsg_tiles_X * bsg_tiles_Y);
+	for (int iter_x = __bsg_id * length; iter_x < (__bsg_id + 1) * length; iter_x += 1) { 
+                kernel_sort(A, B, __bsg_id * length, WIDTH);
+	}
 
-// 	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
+	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
 
-//         return 0;
-// }
+        return 0;
+}
 
 
 // /*
