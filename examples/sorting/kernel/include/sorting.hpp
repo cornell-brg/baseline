@@ -109,6 +109,10 @@ int __attribute__ ((noinline)) kernel_vector_sort_2D_tile_group(T *A, T *B, uint
         // As the tile group is two diemsnional, each tile performs
         // (WIDTH / (bsg_tiles_X * bsg_tiles_Y)) additions
       int size = WIDTH / (bsg_tiles_X * bsg_tiles_Y);
+      for (int i = __bsg_id * size; i < (__bsg_id + 1) * size; i++) {
+        bsg_printf("%d  ", A[i]);
+      }
+      bsg_printf("\n");
       kernel_sort(A, B, __bsg_id * size, (__bsg_id + 1) * size);
       bsg_tile_group_barrier(&r_barrier, &c_barrier); 
 
