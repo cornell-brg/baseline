@@ -83,11 +83,25 @@ void sort( T *A, T *B, int begin, int end ) {
     merge( B, A, begin, mid, A, mid, end );
 
   // Transfer elements back to the original array
-  size_t j = begin;
   for ( size_t i = begin; i < end; i++ ) {
-    A[i] = B[j];
-    j += 1;
+    A[i] = B[i];
   }
+}
+
+template <typename T> 
+void merge_sections(T *A, T *B, int begin, int end, int size) {
+    int mid = (begin + end) / 2;
+    if ( (end - begin) == size ) {
+        return;
+    }
+    if ( (end - begin) != 2 * size) {
+        merge_sections(A, B, begin, mid, size);
+        merge_sections(A, B, mid, end, size);
+    }
+    merge( B, A, begin, mid, A, mid, end );
+    for (size_t i = begin; i < end; i++) {
+        A[i] = B[i];
+    }
 }
 
 
@@ -178,6 +192,9 @@ int run_test(hb_mc_device_t &device, const char* kernel,
                 return rc;
         }
 
+        int size = WIDTH / tg_dim.x * tg_dim.y;
+        merge_sections(A, B, 0, WIDTH, size);
+
         // Compare the known-correct vector (gold) and the result vector (C)
         float max = 0.1;
         double sse = sort_sse(gold, A, WIDTH);
@@ -212,7 +229,6 @@ int kernel_sort (int argc, char **argv) {
         if (!strcmp("v0", test_name)){
                 tg_dim = { .x = 1, .y = 1 };
                 grid_dim = { .x = 1, .y = 1};
-                printf("I definitely got into V000!");
         } else if (!strcmp("v1", test_name)){
                 tg_dim = { .x = 4, .y = 1 };
                 grid_dim = {.x = 1, .y = 1};

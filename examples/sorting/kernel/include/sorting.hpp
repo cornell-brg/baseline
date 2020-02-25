@@ -43,7 +43,7 @@ void __attribute__ ((noinline)) kernel_sort( T *A, T *B, int begin, int end ) {
     kernel_sort(A, B, begin, mid);
     kernel_sort(A, B, mid, end);
 
-  // Out-of-place sort
+  // Out-of-place merge
     kernel_merge( B, A, begin, mid, A, mid, end );
 
   // Transfer elements back to the original array
@@ -107,9 +107,9 @@ int __attribute__ ((noinline)) kernel_vector_sort_2D_tile_group(T *A, T *B, uint
         // Vector is divided among tiles in the tile group
         // As the tile group is two diemsnional, each tile performs
         // (WIDTH / (bsg_tiles_X * bsg_tiles_Y)) additions
-    int length = WIDTH / (bsg_tiles_X * bsg_tiles_Y);
-	for (int iter_x = __bsg_id * length; iter_x < (__bsg_id + 1) * length; iter_x += 1) { 
-                kernel_sort(A, B, __bsg_id * length, WIDTH);
+    int size = WIDTH / (bsg_tiles_X * bsg_tiles_Y);
+	for (int iter_x = 0; iter_x < bsg_tiles_X * bsg_tiles_Y; iter_x += 1) { 
+                kernel_sort(A, B, iter_x * size, (iter_x + 1) * size);
 	}
 
 	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
