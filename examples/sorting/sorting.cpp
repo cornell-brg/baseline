@@ -192,7 +192,7 @@ int run_test(hb_mc_device_t &device, const char* kernel,
                 return rc;
         }
 
-        int size = WIDTH / tg_dim.x * tg_dim.y;
+        int size = WIDTH / (tg_dim.x * tg_dim.y);
         merge_sections(A, B, 0, WIDTH, size);
 
         // Compare the known-correct vector (gold) and the result vector (C)

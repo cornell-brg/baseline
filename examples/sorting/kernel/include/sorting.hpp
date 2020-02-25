@@ -79,20 +79,21 @@ int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, T *B, uint32_t WIDT
  *
  * The code assumes a sinlge 1x1 grid of 1-dimensional tile group
  */
-// template <typename TA, typename TB, typename TC>
-// int __attribute__ ((noinline)) kernel_vector_sort_1D_tile_group(TA *A, int32_t WIDTH) {
+template <typename T>
+int __attribute__ ((noinline)) kernel_vector_sort_1D_tile_group(T *A, T *B, int32_t WIDTH) {
 
-//         // Vector is divided among tiles in the tile group
-//         // As tile group is one dimensional, each tile performs
-//         // (WIDTH / bsg_tiles_X) additions
-// 	for (int iter_x = __bsg_x; iter_x < WIDTH; iter_x += bsg_tiles_X) { 
-//                 C[iter_x] = A[iter_x] + B[iter_x];
-// 	}
+        // Vector is divided among tiles in the tile group
+        // As tile group is one dimensional, each tile performs
+        // (WIDTH / bsg_tiles_X) additions
+  int size = WIDTH / bsg_tiles_X;
+  for (int iter_x = 0; iter_x < bsg_tiles_X; iter_x += 1) { 
+                kernel_sort(A, B, iter_x * size, (iter_x + 1) * size);
+  }
 
-// 	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
+	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
 
-//         return 0;
-// }
+        return 0;
+}
 
 
 /*
