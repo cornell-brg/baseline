@@ -192,8 +192,18 @@ int run_test(hb_mc_device_t &device, const char* kernel,
                 return rc;
         }
 
+        for (int i = 0; i < WIDTH; i++) {
+            printf("%d  ", A[i]);
+        }
+        printf("\n");
+
         int size = WIDTH / (tg_dim.x * tg_dim.y);
         merge_sections(A, B, 0, WIDTH, size);
+
+        for (int i = 0; i < WIDTH; i++) {
+            printf("%d  ", A[i]);
+        }
+        printf("\n");
 
         // Compare the known-correct vector (gold) and the result vector (C)
         float max = 0.1;
