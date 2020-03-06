@@ -6,16 +6,13 @@
   % source setup-hb.sh
 ```
 
-## Get bsg_bladerunner:
+## Get the repos:
   
 ```
   % git clone git@github.com:cornell-brg/bsg_bladerunner.git
   % git checkout pp482-xcel-integrate
-```
-
-  Make sure you are at the following commit:
-```
-  bsg_bladerunner: 155547c548e3b01740eb2100f7741871a0aa44a9
+  % git clone git@github.com:cornell-brg/baseline.git
+  % git checkout pp482-xcel-integration
 ```
 
 ## Initialize the submodules:
