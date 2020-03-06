@@ -1,6 +1,6 @@
 # Vector-vector add accelerator
 
-## Actiavet global environment:
+## Actiavet global HB environment:
   
 ```
   % source setup-hb.sh
@@ -11,6 +11,8 @@
 ```
   % git clone git@github.com:cornell-brg/bsg_bladerunner.git
   % git checkout pp482-xcel-integrate
+  % cd bsg_bladerunner
+  % HB_TOP=$PWD
   % git clone git@github.com:cornell-brg/baseline.git
   % git checkout pp482-xcel-integration
 ```
@@ -19,18 +21,16 @@
   
 ```
   % cd bsg_bladerunner
-  % make setup
+  % git submodule update --init bsg_manycore bsg_replicant basejump_stl
 ```
-  This setup will fetch and build the RISCV tool chain. I cannot use the
-  globally installed tool chain because that's tightly coupled with the
-  manycore repo, and the accelerator source code also lives there.
-
+  Note that we don't use `make setup` because we want to reuse the globally
+  installed HB RISCV tools and AMI build.
+  
 ## Run the accelerator co-simulation:
   
 ```
-  % cd bsg_bladerunner/baseline/examples/vector_add_xcel/
-  % make vector_add_xcel.cosim.log BSG_MACHINE_PATH=/<path>/bsg_bladerunner/bsg_replicant/machines/4x4_vvadd_xcel_blocking_vcache_f1_model
+  % cd $HB_TOP/baseline/examples/vector_add_xcel/
+  % make vector_add_xcel.cosim.log BSG_MACHINE_PATH=$HB_TOP/bsg_replicant/machines/4x4_vvadd_xcel_blocking_vcache_f1_model
 ```
-  
-  You need to change the above path to the path of your
-  `4x4_vvadd_xcel_blocking_vcache_f1_model`
+  The very first build takes ~5 minutes to compile all Verilog modules and
+  may fail due to a known bug. Running the command again should solve that.
