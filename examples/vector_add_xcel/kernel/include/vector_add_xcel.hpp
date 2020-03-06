@@ -1,0 +1,3 @@
+#ifndef __DEVICE_VEC_ADD_XCEL_HPP
+#define __DEVICE_VEC_ADD_XCEL_HPP
+#endif
