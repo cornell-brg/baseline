@@ -10,17 +10,18 @@
   
 ```
   % git clone git@github.com:cornell-brg/bsg_bladerunner.git
-  % git checkout pp482-xcel-integrate
   % cd bsg_bladerunner
   % HB_TOP=$PWD
+  % git checkout pp482-xcel-integrate
   % git clone git@github.com:cornell-brg/baseline.git
+  % cd $HB_TOP/baseline
   % git checkout pp482-xcel-integration
 ```
 
 ## Initialize the submodules:
   
 ```
-  % cd bsg_bladerunner
+  % cd $HB_TOP
   % git submodule update --init bsg_manycore bsg_replicant basejump_stl
 ```
   Note that we don't use `make setup` because we want to reuse the globally
