@@ -65,7 +65,9 @@ $(error $(shell echo -e "$(RED)BSG MAKE ERROR: BSG_MANYCORE_DIR environment vari
 endif
 
 # TODO: Check if exists
-RISCV_BIN_DIR=$(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-install/bin/
+# RISCV_BIN_DIR=$(BSG_MANYCORE_DIR)/software/riscv-tools/riscv-install/bin/
+# PP: use globally installed HB RISCV tool chain here
+RISCV_BIN_DIR=$(BARE_PKGS_GLOBAL_PREFIX)/bladerunner/bsg_manycore/software/riscv-tools/riscv-install/bin/
 
 FRAGMENTS_PATH=$(_REPO_ROOT)/fragments
 
