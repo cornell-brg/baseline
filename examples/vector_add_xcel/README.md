@@ -1,6 +1,6 @@
 # Vector-vector add accelerator
 
-## Actiavet global HB environment:
+## Activate global HB environment:
   
 ```
   % source setup-hb.sh
