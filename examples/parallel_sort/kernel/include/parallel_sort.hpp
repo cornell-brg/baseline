@@ -2,106 +2,157 @@
 #define __PARALLEL_SORT_HPP
 #include <cstdint>
 
-/*
- * This is the most basic single tile version of vector addition
- * that adds two vectors A and B and stores the result in C.
- *
- * The code assumes a sinlge 1x1 grid of a single 1x1 tile group
- * Do NOT use this version with larger tile groups 
- */
-//template <typename TA, typename TB, typename TC>
-//int __attribute__ ((noinline)) kernel_vector_add_single_tile(TA *A, TB *B, TC *C,
-//                      uint32_t WIDTH) {
-//        // A single tile performs the entire vector addition
-//	for (int iter_x = 0; iter_x < WIDTH; iter_x += 1) { 
-//                C[iter_x] = A[iter_x] + B[iter_x];
-//	}
-//
-//	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
-//
-//        return 0;
-//}
+#define K 4
 
-
-/*
- * This is the single 1 dimensional tile group version of vector addition
- * that adds two vectors A and B and stores the result in C.
- *
- * The code assumes a sinlge 1x1 grid of 1-dimensional tile group
- */
-//template <typename TA, typename TB, typename TC>
-//int __attribute__ ((noinline)) kernel_vector_add_single_1D_tile_group(TA *A, TB *B, TC *C,
-//                      uint32_t WIDTH) {
-//
-//        // Vector is divided among tiles in the tile group
-//        // As tile group is one dimensional, each tile performs
-//        // (WIDTH / bsg_tiles_X) additions
-//	for (int iter_x = __bsg_x; iter_x < WIDTH; iter_x += bsg_tiles_X) { 
-//                C[iter_x] = A[iter_x] + B[iter_x];
-//	}
-//
-//	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
-//
-//        return 0;
-//}
-
-// Helper function to actually merge
+// out-of-place merge using the scratchpad (instead of the provided buffer)
+// two subarrays: 
+// left array = [left, middle]
+// right array = (middle, right]
 template <typename TA, typename TC>
-void merge(const TA *A, TC *C, int left, int middle, int right) {
-    int i = 0;
-    int j = 0;
-    int k = 0;
-    int left_length = middle - left + 1;
-    int right_length = right - middle;
-    TA left_array[left_length];
-    TA right_array[right_length];
-    
-    /* copy values to left array */
-    for (int i = 0; i < left_length; i++) {
-        left_array[i] = A[left + i];
+void merge_on_scratchpad(const TA *A, TC *C, int left, int middle, int right) {
+    int left_len = middle - left + 1;
+    int right_len = right - middle;
+    int left_arr[left_len]; // on scratchpad
+    int right_arr[right_len]; // on scratchpad
+
+    // copy values to left array
+    for (int ii = 0; ii < left_len; ii++) {
+        left_arr[ii] = A[left + ii];
     }
     
-    /* copy values to right array */
-    for (int j = 0; j < right_length; j++) {
-        right_array[j] = A[middle + 1 + j];
+    // copy values to right array
+    for (int jj = 0; jj < right_len; jj++) {
+        right_arr[jj] = A[middle + 1 + jj];
     }
     
-    i = 0;
-    j = 0;
-    /** chose from right and left arrays and copy */
-    while (i < left_length && j < right_length) {
-        if (left_array[i] <= right_array[j]) {
-            C[left + k] = left_array[i];
+    int i = 0; // where in left array are we
+    int j = 0; // where in right array are we
+    int k = left; // where in final array are we
+    // choose from right and left arrays and copy
+    while (i < left_len && j < right_len) {
+        if (left_arr[i] <= right_arr[j]) {
+            C[k] = left_arr[i];
             i++;
         } else {
-            C[left + k] = right_array[j];
+            C[k] = right_arr[j];
             j++;
         }
         k++;
     }
     
-    /* copy the remaining values to the array */
-    while (i < left_length) {
-        C[left + k] = left_array[i];
+    // copy the remaining values to the array
+    while (i < left_len) {
+        C[k] = left_arr[i];
         k++;
         i++;
     }
-    while (j < right_length) {
-        C[left + k] = right_array[j];
+    while (j < right_len) {
+        C[k] = right_arr[j];
+        k++;
+        j++;
+    }
+
+}
+
+// insertion sort of array [left, right]
+template <typename TA, typename TC>
+void insertion_sort(const TA *A, TC *C, int left, int right) {
+    for (int i = left; i <= right; i++) {
+        int j = i + 1;
+        int temp = A[j];
+        while (j > left && A[j-1] > temp) {
+            C[j] = A[j-1];
+            j--;
+        }
+    }
+}
+
+// out-of-place merge using the provided buffer @B
+// two subarrays: 
+// left array = [left, middle]
+// right array = (middle, right]
+template <typename TA, typename TB, typename TC>
+void merge(const TA *A, TB *B, TC *C, int left, int middle, int right) {
+    // copy values to left array
+    for (int left_idx = left; left_idx <= middle; left_idx++) {
+        B[left_idx] = A[left_idx];
+    }
+    
+    // copy values to right array
+    for (int right_idx = middle + 1; right_idx <= right; right_idx++) {
+        B[right_idx] = A[right_idx];
+    }
+    
+    int i = left; // where in left array are we
+    int j = middle + 1; // where in right array are we
+    int k = left; // where in final array are we
+    // choose from right and left arrays and copy
+    while (i <= middle && j <= right) {
+        if (B[i] <= B[j]) {
+            C[k] = B[i];
+            i++;
+        } else {
+            C[k] = B[j];
+            j++;
+        }
+        k++;
+    }
+    
+    // copy the remaining values to the array
+    while (i <= middle) {
+        C[k] = B[i];
+        k++;
+        i++;
+    }
+    while (j <= right) {
+        C[k] = B[j];
         k++;
         j++;
     }
 }
 
 // Helper function to perform merge sort
-template <typename TA, typename TC>
-void merge_sort(const TA *A, TC *C, int left, int right) {
+template <typename TA, typename TB, typename TC>
+void merge_sort(const TA *A, TB *B, TC *C, int left, int right) {
+
+// uncomment this for insertion sort
+/*
+    if (right - left <= K) {
+        insertion_sort(A, C, left, right);
+    } else {
+        int middle = left + (right - left) / 2;
+        merge_sort(A, B, C, left, middle);
+        merge_sort(A, B, C, middle + 1, right);
+        merge(A, B, C, left, middle, right);
+    }
+*/
+
+// uncomment this for scratchpad sort
+/*
     if (left < right) {
         int middle = left + (right - left) / 2;
-        merge_sort(A, C, left, middle);
-        merge_sort(A, C, middle + 1, right);
-        merge(A, C, left, middle, right);
+        if (right - left <= K) {
+             merge_sort(A, B, C, left, middle);
+             merge_sort(A, B, C, middle + 1, right);
+             merge_on_scratchpad(A, C, left, middle, right);
+        } else {
+             merge_sort(A, B, C, left, middle);
+             merge_sort(A, B, C, middle + 1, right);
+             merge(A, B, C, left, middle, right);
+        }
     }
+*/
+
+// uncomment this for regular merge sort
+
+    if (left < right) {
+        int middle = left + (right - left) / 2;
+        merge_sort(A, B, C, left, middle);
+        merge_sort(A, B, C, middle + 1, right);
+        merge(A, B, C, left, middle, right);
+    }
+
+
 }
 
 
@@ -111,8 +162,8 @@ void merge_sort(const TA *A, TC *C, int left, int right) {
  *
  * The code assumes a sinlge 1x1 grid of tile group
  */
-template <typename TA, typename TC>
-int __attribute__ ((noinline)) kernel_parallel_sort_single_tile_group(TA *A, TC *C,
+template <typename TA, typename TB, typename TC>
+int __attribute__ ((noinline)) kernel_parallel_sort_single_tile_group(TA *A, TB *B, TC *C,
                       uint32_t WIDTH) {
 
         // Vector is divided among tiles in the tile group
@@ -124,17 +175,24 @@ int __attribute__ ((noinline)) kernel_parallel_sort_single_tile_group(TA *A, TC 
         int left = __bsg_id * N_ELMS;
         int right = (__bsg_id + 1) * N_ELMS - 1;
 
+        //bsg_printf("\nIM TILE %d LEFT %d RIGHT %d\n", __bsg_id, left, right);
+
         // if number of elements in A is not a multiple of number of tiles
         // make the last tile sort the remaining elements as well
         if (__bsg_id ==  N_TILES - 1) {
             right += OFFSET;
         }
+
+/*
         int middle = left + (right - left) / 2;
         if (left < right) {
-            merge_sort(A, C, left, right);
-            merge_sort(A, C, left + 1, right);
-            merge(A, C, left, middle, right);
+            merge_sort(A, B, C, left, right);
+            merge_sort(A, B, C, middle + 1, right);
+            merge(A, B, C, left, middle, right);
         }
+*/
+
+        merge_sort(A, B, C, left, right);
 
 	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
 

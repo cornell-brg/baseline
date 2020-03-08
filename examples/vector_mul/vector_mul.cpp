@@ -176,7 +176,7 @@ int kernel_vector_mul (int argc, char **argv) {
                 tg_dim = { .x = 4, .y = 1 };
                 grid_dim = {.x = 1, .y = 1};
         } else if (!strcmp("v2", test_name)){
-                tg_dim = { .x = 4, .y = 4 };
+                tg_dim = { .x = 2, .y = 2 };
                 grid_dim = {.x = 1, .y = 1};
         } else if (!strcmp("v3", test_name)){
                 tg_dim = { .x = 2, .y = 2 };

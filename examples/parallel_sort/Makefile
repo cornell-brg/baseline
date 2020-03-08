@@ -46,8 +46,7 @@ BSG_MACHINE_PATH=$(BSG_F1_DIR)
 ################################################################################
 # Kernel versions. See kernel/README.md for more information.  Version names do
 # not need to use v* and can be any string
-#VERSIONS = v0 v1 v2 v3
-VERSIONS = v1 v3
+VERSIONS = v0 v1 v2 v3
 ################################################################################
 # Define any sources that should be used compiled during kernel compilation,
 # including the source file with the kernel itself. kernel.riscv will
@@ -63,13 +62,14 @@ VERSIONS = v1 v3
 # C Libraries
 KERNEL_CLIBRARIES   +=
 # C++ Libraries
+KERNEL_CLIBRARIES   += $(BSG_MANYCORE_DIR)/software/bsg_manycore_lib/bsg_printf.c
 KERNEL_CXXLIBRARIES +=
 
 KERNEL_INCLUDES     += -I$(CURRENT_PATH)/kernel/include
 
 # Define the default kernel.cpp file. If KERNEL_DEFAULT is not defined it will
 # be set to kernel.cpp in the same directory as this Makefile.
-DEFAULT_VERSION     := v3
+DEFAULT_VERSION     := v0
 KERNEL_DEFAULT      := kernel/$(DEFAULT_VERSION)/kernel.cpp
 
 ################################################################################

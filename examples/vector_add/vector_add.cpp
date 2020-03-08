@@ -176,12 +176,13 @@ int kernel_vector_add (int argc, char **argv) {
                 tg_dim = { .x = 4, .y = 1 };
                 grid_dim = {.x = 1, .y = 1};
         } else if (!strcmp("v2", test_name)){
-                tg_dim = { .x = 4, .y = 4 };
+                tg_dim = { .x = 2, .y = 2 };
                 grid_dim = {.x = 1, .y = 1};
         } else if (!strcmp("v3", test_name)){
                 tg_dim = { .x = 2, .y = 2 };
-                block_size = {.x = 4, .y = 1};
-                grid_dim = {.x = WIDTH / block_size.x, .y = 1};
+                //block_size = {.x = 4, .y = 1};
+                //grid_dim = {.x = WIDTH / block_size.x, .y = 1};
+                grid_dim = {.x = 1, .y = 1};
         } else {
                 bsg_pr_test_err("Invalid version provided!.\n");
                 return HB_MC_INVALID;
