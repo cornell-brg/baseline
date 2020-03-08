@@ -17,7 +17,7 @@
 #include <bsg_tile_group_barrier.h>
 INIT_TILE_GROUP_BARRIER(r_barrier, c_barrier, 0, bsg_tiles_X-1, 0, bsg_tiles_Y-1);
 
-#include <sorting.hpp>
+#include <sorting_s.hpp>
 #include <cstring>
 
 extern int bsg_printf(const char*, ...);
