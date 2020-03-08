@@ -33,7 +33,7 @@
 // 
 // NOTE: 3 * WIDTH <= 4KB, the size of DMEM on the tile.
 
-#include "sorting.hpp"
+#include "sorting_s.hpp"
 
 // Matrix sizes:
 #define WIDTH  64
