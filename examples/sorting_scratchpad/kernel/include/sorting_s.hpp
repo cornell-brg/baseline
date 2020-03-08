@@ -2,7 +2,9 @@
 #define __SORTING_HPP
 #include <cstdint>
 
+#define K 4
 
+// Out-of-place merge
 template <typename T>
 void __attribute__ ((noinline)) kernel_merge 
     ( T* dst, T* src0, int begin0, int end0,
@@ -35,22 +37,58 @@ void __attribute__ ((noinline)) kernel_merge
 }
 
 template <typename T>
-void __attribute__ ((noinline)) kernel_sort( T *A, T *B, int begin, int end ) {
-    if (end - begin == 1) {
-        return;
-    }
-    int mid = (begin + end) / 2;
-    kernel_sort(A, B, begin, mid);
-    kernel_sort(A, B, mid, end);
+void __attribute__ ((noinline)) insertion_sort( T *A, int begin, int end ) {
+  int size = end - begin;
+  T arr_A[size];
+  T arr_B[size];
 
-  // Out-of-place merge
-    kernel_merge( B, A, begin, mid, A, mid, end );
+  // Copy dram data to local array
+  for (int i = 0; i < size; i++) {
+    arr_A[i] = A[begin + i];
+  } 
+  
+  // Perform an inplace insersion sort
+  int key, j;  
+  for (int i = 1; i < size; i++) 
+  {  
+      key = arr_A[i];  
+      j = i - 1;  
+
+      /* Move elements of arr[0..i-1], that are  
+      greater than key, to one position ahead  
+      of their current position */
+      while (j >= 0 && arr_A[j] > key) 
+      {  
+          arr_A[j + 1] = arr_A[j];  
+          j = j - 1;  
+      }  
+      arr_A[j + 1] = key;  
+  }
 
   // Transfer elements back to the original array
-  int j = begin;
+  for ( int i = 0; i < size; i++ ) {
+    A[begin + i] = arr_A[i];
+  }
+}
+
+
+template <typename T>
+void __attribute__ ((noinline)) kernel_sort( T *A, T *B, int begin, int end ) {
+  if (end - begin == 1) {
+      return;
+  }
+  if (end - begin == K) {
+    insertion_sort(A, begin, end);
+    return;
+  }
+  int mid = (begin + end) / 2;
+  kernel_sort(A, B, begin, mid);
+  kernel_sort(A, B, mid, end);
+  kernel_merge( B, A, begin, mid, A, mid, end );
+
+  // Transfer elements back to the original array
   for ( int i = begin; i < end; i++ ) {
-    A[i] = B[j];
-    j += 1;
+    A[i] = B[i];
   }
 }
 
@@ -64,12 +102,11 @@ void __attribute__ ((noinline)) kernel_sort( T *A, T *B, int begin, int end ) {
  */
 template <typename T>
 int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, T *B, uint32_t WIDTH) {
-    // A single tile performs the entire vector addition
-        kernel_sort(A, B, 0, WIDTH);
+  // A single tile performs the entire vector addition
+  kernel_sort(A, B, 0, WIDTH);
+  bsg_tile_group_barrier(&r_barrier, &c_barrier); 
 
-	bsg_tile_group_barrier(&r_barrier, &c_barrier); 
-
-        return 0;
+  return 0;
 }
 
 
@@ -82,14 +119,14 @@ int __attribute__ ((noinline)) kernel_sort_single_tile(T *A, T *B, uint32_t WIDT
 template <typename T>
 int __attribute__ ((noinline)) kernel_vector_sort_1D_tile_group(T *A, T *B, int32_t WIDTH) {
 
-        // Vector is divided among tiles in the tile group
-        // As tile group is one dimensional, each tile performs
-        // (WIDTH / bsg_tiles_X) additions
-      int size = WIDTH / bsg_tiles_X;
-      kernel_sort(A, B, __bsg_id * size, (__bsg_id + 1) * size);
-      bsg_tile_group_barrier(&r_barrier, &c_barrier); 
+  // Vector is divided among tiles in the tile group
+  // As tile group is one dimensional, each tile performs
+  // (WIDTH / bsg_tiles_X) additions
+  int size = WIDTH / bsg_tiles_X;
+  kernel_sort(A, B, __bsg_id * size, (__bsg_id + 1) * size);
+  bsg_tile_group_barrier(&r_barrier, &c_barrier); 
 
-        return 0;
+  return 0;
 }
 
 
@@ -102,14 +139,14 @@ int __attribute__ ((noinline)) kernel_vector_sort_1D_tile_group(T *A, T *B, int3
 template <typename T>
 int __attribute__ ((noinline)) kernel_vector_sort_2D_tile_group(T *A, T *B, uint32_t WIDTH) {
 
-        // Vector is divided among tiles in the tile group
-        // As the tile group is two diemsnional, each tile performs
-        // (WIDTH / (bsg_tiles_X * bsg_tiles_Y)) additions
-      int size = WIDTH / (bsg_tiles_X * bsg_tiles_Y);
-      kernel_sort(A, B, __bsg_id * size, (__bsg_id + 1) * size);
-      bsg_tile_group_barrier(&r_barrier, &c_barrier); 
+  // Vector is divided among tiles in the tile group
+  // As the tile group is two diemsnional, each tile performs
+  // (WIDTH / (bsg_tiles_X * bsg_tiles_Y)) additions
+  int size = WIDTH / (bsg_tiles_X * bsg_tiles_Y);
+  kernel_sort(A, B, __bsg_id * size, (__bsg_id + 1) * size);
+  bsg_tile_group_barrier(&r_barrier, &c_barrier); 
 
-        return 0;
+  return 0;
 }
 
 
