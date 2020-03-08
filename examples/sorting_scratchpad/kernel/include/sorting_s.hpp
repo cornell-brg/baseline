@@ -48,7 +48,8 @@ void __attribute__ ((noinline)) insertion_sort( T *A, int begin, int end ) {
   } 
   
   // Perform an inplace insersion sort
-  int key, j;  
+  int j; 
+  T key; 
   for (int i = 1; i < size; i++) 
   {  
       key = arr_A[i];  

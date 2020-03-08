@@ -133,10 +133,10 @@ int run_test(hb_mc_device_t &device, const char* kernel,
              const unsigned int tag){
         int rc;
 
-        for (int i = 0; i < WIDTH; i++) {
-            printf("%d  ", A[i]);
-        }
-        printf("\n");
+        // for (int i = 0; i < WIDTH; i++) {
+        //     printf("%d  ", A[i]);
+        // }
+        // printf("\n");
 
         // Copy A from host onto device DRAM.
         void *dst = (void *) ((intptr_t) A_device);
