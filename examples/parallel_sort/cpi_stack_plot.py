@@ -70,30 +70,34 @@ def read_csv(input_csv):
 tags = read_csv("output.csv")
 
 for k, tag in enumerate(tags):
+	fig, ax = plt.subplots()
+	labels = []
+	cpis = []
+	width = 0.35       # the width of the bars: can also be len(x) sequence
 	for t in tags[tag]:
 		cur_t = tags[tag][t]
-		label = t
+		labels.append(t)
 		stalls = cur_t["stalls"]
-		cpis = cur_t["cpi_per"]
+		cpis.append(cur_t["cpi_per"])
 		# men_std = [2, 3, 4, 1, 2]
 		# women_std = [3, 5, 2, 3, 3]
-		width = 0.35       # the width of the bars: can also be len(x) sequence
 
-		fig, ax = plt.subplots()
 
-		for i, s  in enumerate(stalls):
-			if i is 0:
-				ax.bar(label, [cpis[i]],width, label=s)
-			else:
-				ax.bar(label, [cpis[i]], width, bottom=cpis[i-1],
-			       label=s)
 
-			ax.set_ylabel('CPI')
-			ax.set_xlabel('Tile X,Y Coords')
-			ax.set_title('CPI stack for tag ' + str(k+1))
-			ax.legend()
+	for i, s  in enumerate(stalls):
+		if i is 0:
+			ax.bar(labels, [c[i] for c in cpis],width, label=s)
+		else:
+			ax.bar(labels, [c[i] for c in cpis], width, bottom=[c[i-1] for c in cpis],
+		       label=s)
 
-	plt.show()
+	ax.set_ylabel('CPI')
+	ax.set_xlabel('Tile X,Y Coords')
+	ax.set_title('CPI stack for tag ' + str(k+1))
+	ax.legend()
+
+	plt.savefig("cpi_stack_tag_"+tag+".png")
+
 
 
 
