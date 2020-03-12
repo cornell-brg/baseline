@@ -24,7 +24,10 @@ def read_csv(input_csv):
 				#stall i corresponds to cyc_per i:
 				tile_num = input_reader[i][0]+ "_" + input_reader[i][1]
 				
-				tags[cur_tag] = {tile_num: {"CPI": cpi, "stalls": [], "cpi_per": []}}
+				if cur_tag not in tags.keys():
+					tags[cur_tag] = {tile_num: {"CPI": cpi, "stalls": [], "cpi_per": []}}
+				else:
+					tags[cur_tag][tile_num] = {"CPI": cpi, "stalls": [], "cpi_per": []}
 				
 				i+=1
 
@@ -73,16 +76,17 @@ for k, tag in enumerate(tags):
 	fig, ax = plt.subplots()
 	labels = []
 	stall_tot = {}
-	cpis = []
 	width = 0.35       # the width of the bars: can also be len(x) sequence
 	for c, t in enumerate(tags[tag]):
 		cur_t = tags[tag][t]
+		print(cur_t)
+
 		labels.append(t)
 		stalls = cur_t["stalls"]
-		cpis.extend(cur_t["cpi_per"])
+		cpis = cur_t["cpi_per"]
 
 	for i, s in enumerate(stalls):
-		if c is 0:
+		if s not in stall_tot.keys():
 			stall_tot[s] = [cpis[i]]
 		else:
 			stall_tot[s].append(cpis[i])
