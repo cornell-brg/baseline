@@ -38,7 +38,7 @@
 
 // Matrix sizes:
 #define WIDTH  64
-#define NUM_ITER 1
+#define NUM_ITER 0
 
 // Host Parallel Sort code (to compare results)
 template <typename TA, typename TC>

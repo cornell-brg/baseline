@@ -2,9 +2,9 @@ import sys, os
 import re
 import csv
 
-filepaths = ['parallel_sort/kernel/v2/stats/tile/tile_0_0_stats.log',
-'parallel_sort/kernel/v2/stats/tile/tile_1_2_stats.log',
-'parallel_sort/kernel/v2/stats/tile/tile_2_3_stats.log',
+filepaths = ['kernel/v2/stats/tile/tile_0_0_stats.log',
+'kernel/v2/stats/tile/tile_1_2_stats.log',
+'kernel/v2/stats/tile/tile_2_3_stats.log',
 ]
 
 '''
