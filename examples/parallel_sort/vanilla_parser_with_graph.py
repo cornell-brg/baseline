@@ -1229,9 +1229,9 @@ class VanillaStatsParser:
 
                 # graph
                 ax.broken_barh(tile_data, yrange, facecolors=colors)
-                yr_ctr += tileoffset
                 yticks.append(yr_ctr)
                 yticklabels.append(tile)
+                yr_ctr += tileoffset
 
             # set params for this figure
             ystart = miny #min([c['start_cycle'] for c in self.tile_stat[tag].values()])
