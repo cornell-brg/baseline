@@ -12,11 +12,13 @@
 #
 #   How to use:
 #   python3 vanilla_stats_parser.py 
+#                       --no_graph (optional)
 #                       --tile (optional) --tile_group (optional)
-#                        --input {vanilla_stats.csv}
+#                       --input {vanilla_stats.csv}
 #
 #   ex) python3 --input vanilla_stats_parser.py --tile --tile_group --input vanilla_stats.csv
 #
+#   {no_graph}        Do not produce performance metric graphs
 #   {tile}            Generate separate stats file for each tile default = False
 #   {tile_group}      Generate separate stats file for each tile group default = False
 #   {input}           Vanilla stats input file     default = vanilla_stats.csv
@@ -30,17 +32,20 @@ import numpy as np
 from enum import Enum
 from collections import Counter
 
+import pprint
+
 # for graphing
+from math import ceil
+from matplotlib.cm import get_cmap
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+
+# for saving figures to pdf
 from matplotlib.backends.backend_pgf import PdfPages
 # don't default to xelatex; must include this for brg-vip
 pgf_with_rc_fonts = {"pgf.texsystem": "pdflatex"}
 import matplotlib
 matplotlib.rcParams.update(pgf_with_rc_fonts)
-
-# TODO remove: for debug print
-import pprint
 
 # CudaStatTag class 
 # Is instantiated by a packet tag value that is recieved from a 
@@ -1190,59 +1195,139 @@ class VanillaStatsParser:
                     stats += [item]
         return (stats, instrs, misses, stalls, bubbles)
 
-    def print_tile_cycle_graph(self):
-        # get data per tile, with all ops for each tile
-        colors = ('tab:green', 'tab:red', 'tab:orange', 'tab:blue')
-        green = mpatches.Patch(color='green', label='instr')
-        red = mpatches.Patch(color='red', label='stall')
-        orange = mpatches.Patch(color='orange', label='bubble')
-        blue = mpatches.Patch(color='blue', label='other')
-
-        barsize = 5
+    def print_activity_diagram(self):
+        barsize = 3
         tileoffset = 10
+        pp = PdfPages('activity_diagram.pdf')
+
+        for tag in self.tile_stat:
+            if not any(['global_ctr' in c for t in self.tile_stat[tag].values() for c in t]):
+                continue
+            fig, ax = plt.subplots()
+            fig.suptitle('tag: ' + str(tag))
+            yr_ctr = tileoffset
+            yticks = []
+            yticklabels = []
+            minx = max([c['start_cycle'] for c in self.tile_stat[tag].values()])
+            for tile in self.tile_stat[tag]:
+                # get data
+                yrange = (yr_ctr, barsize)
+                ctr = self.tile_stat[tag][tile]
+                start = ctr['start_cycle']
+                if start < minx:
+                    minx = start
+                end = ctr['end_cycle']
+                tile_data = [(start, end-start)]
+
+                # graph
+                ax.broken_barh(tile_data, yrange, facecolors='black')
+                yticks.append(yr_ctr)
+                yticklabels.append(tile)
+                yr_ctr += tileoffset
+
+            # set params for this figure
+            xstart = minx
+            xend = max([c['end_cycle'] for c in self.tile_stat[tag].values()])
+            ax.set_xlim((xstart, xend))
+            ax.set_xticks(range(xstart, xend, 500))
+            ax.set_ylim((0, yticks[-1] + tileoffset + barsize))
+            ax.grid(True)
+            ax.set_xlabel('Exec Time (Cycle)')
+            ax.set_ylabel('Tile')
+            ax.set_yticks(yticks)
+            ax.set_yticklabels(yticklabels)
+
+            # save this figure to pdf
+            pp.savefig()
+
+        pp.close()
+
+
+    def print_exec_time_stacks_graph(self):
+        barsize = 0.5
         pp = PdfPages('gantt.pdf')
 
         for tag in self.tile_stat:
             if not any(['global_ctr' in c for t in self.tile_stat[tag].values() for c in t]):
                 continue
             fig, ax = plt.subplots()
-            fig.legend(handles=[green,red,orange,blue])
-            fig.suptitle('tag: ' + str(tag))
-            yr_ctr = tileoffset
-            yticks = []
-            yticklabels = []
-            miny = max([c['start_cycle'] for c in self.tile_stat[tag].values()])
+            fig.suptitle('tag: ' + str(tag), x=0.1)
+
+            tiles = []
+            tile_data_instr = []
+            tile_data_stall = {}
+            tile_data_bubble = {}
+            tile_data_other = []
             for tile in self.tile_stat[tag]:
                 # get data
-                yrange = (yr_ctr, barsize)
                 ctr = self.tile_stat[tag][tile]
-                start = ctr['start_cycle']
-                if start < miny:
-                    miny = start
-                end = ctr['end_cycle']
-                total = ctr['cycle']
-                instr = (start, ctr['instr_total'])
-                stall = (instr[0] + instr[1], ctr['stall_total'])
-                bubble = (stall[0] + stall[1], ctr['bubble_total'])
-                other = (bubble[0] + bubble[1], total - instr[1] - stall[1] - bubble[1])
-                tile_data = [instr, stall, bubble, other]
+                for k in self.stalls:
+                    if k == 'stall_total':
+                        continue
+                    if not k in tile_data_stall:
+                        tile_data_stall[k] = []
+                    if not k in ctr:
+                        tile_data_stall[k].append(0)
+                    else:
+                        tile_data_stall[k].append(ctr[k])
+                for k in self.bubbles:
+                    if k == 'bubble_total':
+                        continue
+                    if not k in tile_data_bubble:
+                        tile_data_bubble[k] = []
+                    if not k in ctr:
+                        tile_data_bubble[k].append(0)
+                    else:
+                        tile_data_bubble[k].append(ctr[k])
 
-                # graph
-                ax.broken_barh(tile_data, yrange, facecolors=colors)
-                yticks.append(yr_ctr)
-                yticklabels.append(tile)
-                yr_ctr += tileoffset
+                tiles.append(tile)
+                tile_data_instr.append(ctr['instr_total'])
+                tile_data_other.append(ctr['cycle'] - ctr['instr_total'] - ctr['stall_total'] - ctr['bubble_total'])
+
+            # graph all tiles
+            tile_inds = range(0, len(tiles))
+            legends = []
+
+            # generate colors
+            stall_cmap = get_cmap('gist_ncar')
+            stall_colors = [stall_cmap(i) for i in range(0, stall_cmap.N, (ceil)(stall_cmap.N / len(tile_data_stall)))]
+            bubble_cmap = get_cmap('plasma')
+            bubble_colors = [bubble_cmap(i) for i in range(0, bubble_cmap.N, (ceil)(bubble_cmap.N / len(tile_data_bubble)))]
+
+            # graph valid instr first
+            ax.bar(tile_inds, tile_data_instr, color='green', width=barsize)
+            legends.append(mpatches.Patch(color='green', label='instr'))
+            bot = tile_data_instr
+
+            # graph stalls
+            i = 0 # for tracking color
+            for k,v in tile_data_stall.items():
+                assert len(v) == len(tiles)
+                ax.bar(tile_inds, v, bottom=bot, color=stall_colors[i], width=barsize)
+                legends.append(mpatches.Patch(color=stall_colors[i], label=k)) # add legend
+                bot = [x+y for x,y in zip(bot, v)]
+                i += 1
+
+            # graph bubbles
+            i = 0 # for tracking color
+            for k,v in tile_data_bubble.items():
+                assert len(v) == len(tiles)
+                ax.bar(tile_inds, v, bottom=bot, color=bubble_colors[i], width=barsize)
+                legends.append(mpatches.Patch(color=bubble_colors[i], label=k)) # add legend
+                bot = [x+y for x,y in zip(bot, v)]
+                i += 1
+
+            # graph other
+            ax.bar(tile_inds, tile_data_other, bottom=bot, color='black', width=barsize)
+            legends.append(mpatches.Patch(color='black', label='other'))
 
             # set params for this figure
-            ystart = miny #min([c['start_cycle'] for c in self.tile_stat[tag].values()])
-            yend = max([c['end_cycle'] for c in self.tile_stat[tag].values()])
-            ax.set_xlim((ystart, yend))
-            ax.set_ylim((0, yticks[-1] + tileoffset + barsize))
+            fig.legend(handles=legends, fontsize='xx-small', ncol=4)
             ax.grid(True)
-            ax.set_xlabel('Time (Cycle)')
-            ax.set_ylabel('Tile')
-            ax.set_yticks(yticks)
-            ax.set_yticklabels(yticklabels)
+            ax.set_xlabel('Tile (row (Y), col (X))')
+            ax.set_ylabel('Cycles')
+            ax.set_xticks(tile_inds)
+            ax.set_xticklabels(tiles)
 
             # save this figure to pdf
             pp.savefig()
@@ -1258,6 +1343,8 @@ def parse_args():
                         help="Also generate separate stats files for each tile.")
     parser.add_argument("--tile_group", default=False, action='store_true',
                         help="Also generate separate stats files for each tile group.")
+    parser.add_argument("--no_graph", default=False, action='store_true',
+                        help="Do not produce performance graphs.")
     args = parser.parse_args()
     return args
 
@@ -1268,13 +1355,14 @@ if __name__ == "__main__":
     args = parse_args()
   
     st = VanillaStatsParser(args.tile, args.tile_group, args.input)
-#    pp = pprint.PrettyPrinter(indent=2)
-#    print("MANYCORE_STATS")
-#    pp.pprint(st.manycore_stat)
-#    print("TILE_STATS")
-#    pp.pprint(st.tile_stat)
-    print('GRAPHING')
-    st.print_tile_cycle_graph()
+
+#    pprint.pprint(st.tile_stat)
+
+    # graph
+    if not args.no_graph:
+        print('graphing...')
+        st.print_activity_diagram()
+        st.print_exec_time_stacks_graph()
 
     st.print_manycore_stats_all()
     if(st.per_tile_stat):
