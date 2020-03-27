@@ -1233,7 +1233,7 @@ class VanillaStatsParser:
             ax.set_ylim((0, yticks[-1] + tileoffset + barsize))
             ax.grid(True)
             ax.set_xlabel('Exec Time (Cycle)')
-            ax.set_ylabel('Tile')
+            ax.set_ylabel('Tile (row (Y), col (X))')
             ax.set_yticks(yticks)
             ax.set_yticklabels(yticklabels)
 
